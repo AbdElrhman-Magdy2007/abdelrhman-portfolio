@@ -1,13 +1,15 @@
 // src/app/admin/page.tsx
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { UserRole } from "@prisma/client";
+import { UserRole } from "../types/user";
 import EditUserForm from "@/components/edit-user-form";
 import { Pages, Routes } from "@/constants/enums";
 import clsx from "clsx";
 import { authOptions } from "../server/auth";
 import type { Session } from "next-auth";
 import type { JSX } from "react";
+
+export const dynamic = 'force-dynamic';
 
 // Constants for reusability
 const ROUTES = {

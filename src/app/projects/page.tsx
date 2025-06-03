@@ -12,6 +12,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { getProductsByCategory } from '../server/db/products';
 import { debounce } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
+import { ProductWithRelations } from '../types/product';
 
 // Define data types
 interface Project {
@@ -22,8 +23,8 @@ interface Project {
   techs: string[];
   addons: string[];
   link: string;
-  demoUrl?: string | null;
-  githubUrl?: string | null;
+  demoUrl?: string;
+  githubUrl?: string;
   featured: boolean;
   category: string;
   projectType: 'Full-Stack' | 'Front-End' | 'Back-End';
@@ -31,6 +32,19 @@ interface Project {
   productAddons?: { name: string }[];
   createdAt: string;
   updatedAt: string;
+}
+
+interface ServerCategoryWithProducts {
+  id: string;
+  name: string;
+  order: number;
+  products: ProductWithRelations[];
+}
+
+interface MappedCategory {
+  name: string;
+  icon: string;
+  projects?: Project[];
 }
 
 const LOG_PREFIX = '[Projects]';
@@ -259,7 +273,7 @@ const ProjectCard: React.FC<{ project: Project }> = ({ project }) => {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <motion.a
-                    href={project.demoUrl || '#'}
+                    href={project.demoUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     variants={buttonVariants}
@@ -282,7 +296,7 @@ const ProjectCard: React.FC<{ project: Project }> = ({ project }) => {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <motion.a
-                    href={project.githubUrl || '#'}
+                    href={project.githubUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     variants={buttonVariants}
@@ -460,28 +474,27 @@ const ProjectsShowcase: React.FC = () => {
         saveScrollPosition();
         console.log(`${LOG_PREFIX} [${requestId}] Fetching categories`);
         const result = await getProductsByCategory();
-        if (!Array.isArray(result)) {
-          throw new Error('Invalid response from server');
+        if ('error' in result) {
+          throw new Error(result.error);
         }
         const mappedCategories = [
-          { name: 'All', icon: '🌐', projects: [] },
-          ...result.map(category => ({
-            ...category,
+          { name: 'All', icon: '🌐' },
+          ...result.map((category: ServerCategoryWithProducts): MappedCategory => ({
             name: category.name,
             icon: '🗂️',
-            projects: category.products?.map(project => ({
+            projects: category.products?.map((project: any) => ({
               id: project.id,
               title: project.name,
               description: project.description,
               image: project.image,
-              techs: project.ProductTech?.map(tech => tech.name) || [],
-              addons: project.ProductAddon?.map(addon => addon.name) || [],
+              techs: project.ProductTech?.map((tech: { name: string }) => tech.name) || [],
+              addons: project.ProductAddon?.map((addon: { name: string }) => addon.name) || [],
               link: project.liveDemoLink || '',
               demoUrl: project.liveDemoLink,
               githubUrl: project.gitHubLink,
               featured: false,
-              category: category.name,
-              projectType: 'Full-Stack' as const,
+              category: project.category,
+              projectType: project.projectType || 'Full-Stack',
               productTechs: project.ProductTech,
               productAddons: project.ProductAddon,
               createdAt: project.createdAt.toISOString(),
@@ -760,7 +773,7 @@ const ProjectsShowcase: React.FC = () => {
               variants={containerVariants}
               className="projects-grid w-full max-w-7xl mx-auto"
             >
-              <AnimatePresence mode="sync">
+              <AnimatePresence>
                 {filteredProjects.length > 0 ? (
                   filteredProjects.map((project) => (
                     <ProjectCard key={project.id} project={project} />

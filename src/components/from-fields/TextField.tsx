@@ -35,6 +35,7 @@ const TextField = memo(
       ref
     ) => {
       const displayLabel = label || name;
+      const isControlled = value !== undefined;
 
       return (
         <div dir={isArabic ? "rtl" : "ltr"} className="form-field space-y-2 text-indigo-700">
@@ -58,8 +59,7 @@ const TextField = memo(
             placeholder={placeholder}
             disabled={disabled}
             autoFocus={autoFocus}
-            defaultValue={defaultValue}
-            value={value}
+            {...(isControlled ? { value } : { defaultValue })}
             pattern={pattern}
             onChange={onChange}
             readOnly={readOnly}
