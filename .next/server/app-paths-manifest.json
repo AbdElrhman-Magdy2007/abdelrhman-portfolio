@@ -1,0 +1,7 @@
+{
+  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/admin/menu-items/[productId]/edit/page": "app/admin/menu-items/[productId]/edit/page.js",
+  "/admin/menu-items/page": "app/admin/menu-items/page.js",
+  "/admin/menu-items/new/page": "app/admin/menu-items/new/page.js"
+}

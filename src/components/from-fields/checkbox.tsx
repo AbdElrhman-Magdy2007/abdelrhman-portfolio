@@ -1,4 +1,3 @@
-
 import { IFormField } from "@/app/types/app";
 import { Checkbox as ShadcnCheckbox } from "../ui/checkbox";
 import clsx from "clsx";
@@ -13,7 +12,7 @@ interface Props {
   required?: boolean; // إضافة دعم للحقل المطلوب
   onClick?: () => void;
   error?: string;
-  
+  onValidationChange?: (isValid: boolean) => void;
 }
 
 /**
@@ -28,6 +27,8 @@ const Checkbox = ({
   disabled = false,
   required = false,
   onClick,
+  error,
+  onValidationChange,
 }: Props) => {
   return (
     <div
@@ -41,15 +42,21 @@ const Checkbox = ({
         id={name}
         name={name}
         checked={checked}
-        onCheckedChange={onCheckedChange} // استخدام onCheckedChange بدلاً من onClick
+        onCheckedChange={(newChecked: boolean) => {
+          onCheckedChange?.(newChecked);
+          onValidationChange?.(newChecked);
+        }}
         disabled={disabled}
         required={required}
         onClick={onClick}
         className={clsx(
           "border-accent",
           checked && "bg-accent text-black",
-          disabled && "border-indigo-700 bg-black text-indigo-700"
+          disabled && "border-indigo-700 bg-black text-indigo-700",
+          error && "border-red-500"
         )}
+        aria-invalid={!!error}
+        aria-describedby={error ? `${name}-error` : undefined}
       />
       {label && (
         <Label
@@ -61,6 +68,14 @@ const Checkbox = ({
         >
           {label}
         </Label>
+      )}
+      {error && (
+        <p
+          id={`${name}-error`}
+          className="text-sm font-medium text-red-600 mt-2"
+        >
+          {error}
+        </p>
       )}
     </div>
   );

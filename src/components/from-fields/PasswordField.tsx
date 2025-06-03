@@ -10,13 +10,10 @@ import { ValidationError } from "@/app/validations/auth";
 
 interface Props extends IFormField {
   error?: ValidationError | string;
-  defaultValue?: string;
-  onValidationChange?: (isValid: boolean) => void; // دالة لإبلاغ الوالد بحالة التحقق
-   value?: string;
-     name: string;
-  label?: string;
-  type: "number" | "text" | "email" | "password" | "date" | "time" | "datetime-local" | "checkbox" | "radio" | "select" | "textarea" | "hidden" | "tel" | "url";
+  defaultValue?: string | number;
+  onValidationChange?: (isValid: boolean) => void;
   isArabic?: boolean;
+  value?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
@@ -29,12 +26,15 @@ const PasswordField = ({
   error,
   defaultValue,
   onValidationChange,
+  isArabic,
+  value,
+  onChange,
 }: Props) => {
   const [showPassword, setShowPassword] = useState(false);
-  const [password, setPassword] = useState(defaultValue || "");
+  const [password, setPassword] = useState(value || defaultValue?.toString() || "");
   const [localError, setLocalError] = useState<string | null>(null);
   const params = useParams();
-  const locale = (params?.locale as Languages) || Languages.ENGLISH;
+  const locale = isArabic ?? (params?.locale === Languages.ARABIC);
 
   const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
 
@@ -57,9 +57,10 @@ const PasswordField = ({
 
   // معالجة تغيير قيمة الحقل
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setPassword(value);
-    validatePassword(value);
+    const newValue = e.target.value;
+    setPassword(newValue);
+    validatePassword(newValue);
+    onChange?.(e);
   };
 
   // استخراج الخطأ من الخاصية error أو استخدام الخطأ المحلي
@@ -71,7 +72,10 @@ const PasswordField = ({
       : localError;
 
   return (
-    <div className="space-y-2">
+    <div className={clsx("space-y-2", {
+      "text-right": locale,
+      "text-left": !locale,
+    })} dir={locale ? "rtl" : "ltr"}>
       {label && (
         <Label htmlFor={name} className="capitalize text-indigo-700">
           {label}
@@ -87,7 +91,7 @@ const PasswordField = ({
           autoComplete="off"
           name={name}
           id={name}
-          value={password}
+          value={value ?? password}
           onChange={handleChange}
           aria-invalid={!!fieldError}
           aria-describedby={fieldError ? `${name}-error` : undefined}
@@ -100,8 +104,8 @@ const PasswordField = ({
           type="button"
           onClick={togglePasswordVisibility}
           className={clsx("absolute", {
-            "left-3": locale === Languages.ARABIC,
-            "right-3": locale !== Languages.ARABIC,
+            "left-3": locale,
+            "right-3": !locale,
           })}
         >
           {showPassword ? (

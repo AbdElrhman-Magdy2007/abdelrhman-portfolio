@@ -1,4 +1,3 @@
-// app/menu-items/_components/ItemOptions.tsx
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
@@ -18,6 +17,7 @@ import {
 import clsx from "clsx";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { type VariantProps } from "class-variance-authority";
 
 export enum ItemOptionsKeys {
   ProductTechS = "ProductTechS",
@@ -38,6 +38,9 @@ const buttonVariants = {
   tap: { scale: 0.95, transition: { duration: 0.1 } },
 };
 
+/**
+ * Props for the ItemOptions component.
+ */
 interface ItemOptionsProps<T> {
   state: T[];
   setState: React.Dispatch<React.SetStateAction<T[]>>;
@@ -45,8 +48,19 @@ interface ItemOptionsProps<T> {
   className?: string;
   placeholder?: string;
   validate?: (item: T) => string | null;
+  renderInput?: (
+    index: number,
+    item: T,
+    onChange: (item: T) => void
+  ) => React.ReactNode;
 }
 
+/**
+ * Generic component to manage ProductTech or ProductAddon options.
+ * For ProductAddonS, only one addon can be added (with no price input), and the "Add Addon" button disappears after adding one.
+ * @param props - Component props.
+ * @returns JSX.Element
+ */
 function ItemOptions<T extends Partial<ProductTech> | Partial<ProductAddon>>({
   state,
   setState,
@@ -54,11 +68,15 @@ function ItemOptions<T extends Partial<ProductTech> | Partial<ProductAddon>>({
   className,
   placeholder = "Enter option",
   validate = () => null,
+  renderInput,
 }: ItemOptionsProps<T>) {
   const [isAdding, setIsAdding] = useState(false);
   const isProductTech = optionKey === ItemOptionsKeys.ProductTechS;
   const showAddButton = isProductTech || state.length < 1;
 
+  /**
+   * Handles option-related actions (add, change, remove).
+   */
   const handleOptions = useCallback(() => {
     const addOption = async () => {
       if (!isProductTech && state.length >= 1) {
@@ -134,6 +152,20 @@ function ItemOptions<T extends Partial<ProductTech> | Partial<ProductAddon>>({
     };
 
     const removeOption = (index: number) => {
+      if (isProductTech && state.length <= 1) {
+        toast.error("At least one technology is required.", {
+          icon: <Trash2 className="w-5 h-5 text-red-400" />,
+          style: {
+            backgroundColor: "#4E1313",
+            color: "#FCA5A5",
+            border: "1px solid #FCA5A5",
+            borderRadius: "10px",
+            padding: "16px",
+            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+          },
+        });
+        return;
+      }
       setState((prev) => prev.filter((_, i) => i !== index));
       toast.success(`${isProductTech ? "Technology" : "Addon"} removed`, {
         icon: <Trash2 className="w-5 h-5 text-green-400" />,
@@ -178,47 +210,51 @@ function ItemOptions<T extends Partial<ProductTech> | Partial<ProductAddon>>({
                 role="listitem"
                 aria-label={`${isProductTech ? "Technology" : "Addon"} option ${index + 1}`}
               >
-                <div className="flex-1 space-y-2">
-                  <Label
-                    className="text-sm font-medium text-foreground"
-                    htmlFor={`${optionKey}-${index}-name`}
-                  >
-                    {isProductTech ? "Technology" : "Addon Name"}
-                  </Label>
-                  {isProductTech ? (
-                    <Input
-                      id={`${optionKey}-${index}-name`}
-                      type="text"
-                      placeholder={placeholder}
-                      value={item.name ?? ""}
-                      onChange={(e) =>
-                        onChange(index, { ...item, name: e.target.value })
-                      }
-                      className={clsx(
-                        "w-full p-3 rounded-md bg-background text-foreground border border-input",
-                        "focus:ring-2 focus:ring-primary focus:border-primary",
-                        "placeholder-muted-foreground"
-                      )}
-                      required
-                      aria-required="true"
-                    />
-                  ) : (
-                    <SelectName
-                      item={item as Partial<ProductAddon>}
-                      onChange={(fieldName, value) =>
-                        onChange(index, { ...item, [fieldName]: value })
-                      }
-                      index={index}
-                      currentState={state as Partial<ProductAddon>[]}
-                      optionKey={optionKey}
-                    />
-                  )}
-                </div>
+                {renderInput ? (
+                  renderInput(index, item, (updatedItem) => onChange(index, updatedItem))
+                ) : (
+                  <div className="flex-1 space-y-2">
+                    <Label
+                      className="text-sm font-medium text-foreground"
+                      htmlFor={`${optionKey}-${index}-name`}
+                    >
+                      {isProductTech ? "Technology" : "Addon Name"}
+                    </Label>
+                    {isProductTech ? (
+                      <Input
+                        id={`${optionKey}-${index}-name`}
+                        type="text"
+                        placeholder={placeholder}
+                        value={item.name ?? ""}
+                        onChange={(e) =>
+                          onChange(index, { ...item, name: e.target.value })
+                        }
+                        className={clsx(
+                          "w-full p-3 rounded-md bg-background text-foreground border border-input",
+                          "focus:ring-2 focus:ring-primary focus:border-primary",
+                          "placeholder-muted-foreground"
+                        )}
+                        required
+                        aria-required="true"
+                      />
+                    ) : (
+                      <SelectName
+                        item={item as Partial<ProductAddon>}
+                        onChange={(fieldName, value) =>
+                          onChange(index, { ...item, [fieldName]: value })
+                        }
+                        index={index}
+                        currentState={state as Partial<ProductAddon>[]}
+                        optionKey={optionKey}
+                      />
+                    )}
+                  </div>
+                )}
                 <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
                   <Button
                     type="button"
-                    variant="outline"
-                    size="icon"
+                    variant={"outline" as const}
+                    size={"icon" as const}
                     onClick={() => removeOption(index)}
                     className={clsx(
                       "flex-shrink-0 border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive",
@@ -246,7 +282,7 @@ function ItemOptions<T extends Partial<ProductTech> | Partial<ProductAddon>>({
           >
             <Button
               type="button"
-              variant="outline"
+              variant={"outline" as const}
               className={clsx(
                 "w-full py-3 rounded-xl shadow-sm",
                 "bg-gradient-to-r from-primary to-secondary text-primary-foreground border border-primary/50",
@@ -292,6 +328,9 @@ function ItemOptions<T extends Partial<ProductTech> | Partial<ProductAddon>>({
   );
 }
 
+/**
+ * Props for the SelectName component.
+ */
 interface SelectNameProps {
   index: number;
   item: Partial<ProductAddon>;
@@ -300,6 +339,11 @@ interface SelectNameProps {
   onChange: (fieldName: keyof ProductAddon, value: string) => void;
 }
 
+/**
+ * Component to select a PackageOption for ProductAddon.
+ * @param props - Component props.
+ * @returns JSX.Element
+ */
 function SelectName({ onChange, index, item, currentState, optionKey }: SelectNameProps) {
   const packageOptions = useMemo(
     () => [

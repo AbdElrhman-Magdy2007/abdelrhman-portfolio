@@ -7,6 +7,7 @@ import Checkbox from "./checkbox";
 import { IFormField } from "@/app/types/app";
 import { ValidationError } from "@/app/validations/auth";
 
+// واجهة الخصائص مع دعم التحقق وتخصيص اللغة
 interface Props extends Omit<IFormField, "type"> {
   name: string;
   type: InputTypes;
@@ -16,101 +17,102 @@ interface Props extends Omit<IFormField, "type"> {
   value?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onValidationChange?: (isValid: boolean) => void;
+  defaultValue?: string | number;
 }
 
-const FormFields = memo((props: Props) => {
-  const {
-    type,
-    error,
-    name,
-    label,
-    isArabic,
-    value,
-    onChange,
-    onValidationChange,
-    ...rest
-  } = props;
+// مكون FormFields لعرض حقول النموذج بناءً على النوع مع تحسين الأداء
+const FormFields = memo(
+  ({ type, error, name, label, isArabic, value, onChange, onValidationChange, ...rest }: Props) => {
+    // تحديد اللغة بناءً على المعامل أو المسار
+    const params = useParams();
+    const locale = isArabic ?? (params?.locale === Languages.ARABIC);
 
-  const params = useParams();
-  const locale = isArabic ?? (params?.locale === Languages.ARABIC);
+    // استخراج الخطأ الخاص بالحقل بشكل موحد
+    const fieldError =
+      error && typeof error === "object" && name
+        ? error[name]?.[0] || ""
+        : typeof error === "string"
+        ? error
+        : undefined;
 
-  const fieldError =
-    typeof error === "object" && name ? error[name]?.[0] || "" : typeof error === "string" ? error : undefined;
+    // التحقق من صحة الإدخال
+    const handleValidation = (inputValue: string) => {
+      if (onValidationChange) {
+        const isValid = inputValue.length >= 2;
+        onValidationChange(isValid);
+      }
+    };
 
-  const handleValidation = (inputValue: string) => {
-    if (onValidationChange) {
-      const isValid = inputValue.trim().length >= 2;
-      onValidationChange(isValid);
-    }
-  };
+    // عرض الحقل المناسب بناءً على النوع
+    const renderField = (): React.ReactNode => {
+      const defaultValue = rest.defaultValue?.toString() || "";
+      console.log(`[FormFields] Rendering ${name}: type=${type}, value=${value || defaultValue}`);
+      switch (type) {
+        case InputTypes.EMAIL:
+        case InputTypes.TEXT:
+        case InputTypes.URL:
+          return (
+            <TextField
+              isArabic={locale}
+              name={name}
+              label={label}
+              type={type === InputTypes.EMAIL ? "email" : type === InputTypes.URL ? "url" : "text"}
+              value={value}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                console.log(`[TextField] ${name} changed to: ${e.target.value}`);
+                onChange?.(e);
+                handleValidation(e.target.value);
+              }}
+              error={fieldError}
+              {...rest}
+            />
+          );
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onChange?.(e);
-    handleValidation(e.target.value);
-  };
+        case InputTypes.PASSWORD:
+          return (
+            <PasswordField
+              isArabic={locale}
+              name={name}
+              label={label}
+              type="password"
+              value={value}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                console.log(`[PasswordField] ${name} changed to: ${e.target.value}`);
+                onChange?.(e);
+                handleValidation(e.target.value);
+              }}
+              error={fieldError}
+              {...rest}
+            />
+          );
 
-  const renderField = (): React.ReactNode => {
-    switch (type) {
-      case InputTypes.TEXT:
-      case InputTypes.EMAIL:
-      case InputTypes.URL:
-        return (
-          <TextField
-            name={name}
-            label={label}
-            type={(type.toLowerCase() as "text" | "email" | "url") || 'text'}
-            value={value}
-            onChange={handleChange}
-            error={fieldError}
-            isArabic={locale}
-            {...rest}
-            pattern={rest.pattern || ''}
-          />
-        );
+        case InputTypes.CHECKBOX:
+          return (
+            <Checkbox
+              name={name}
+              label={label}
+              checked={value === "true" || defaultValue === "true" || false}
+              error={fieldError}
+              onCheckedChange={(checked) => {
+                console.log(`[Checkbox] ${name} changed to: ${checked}`);
+                onChange?.({ target: { name, value: checked.toString() } } as React.ChangeEvent<HTMLInputElement>);
+                handleValidation(checked.toString());
+              }}
+              {...rest}
+            />
+          );
 
-      case InputTypes.PASSWORD:
-        return (
-          <PasswordField
-            name={name}
-            label={label}
-            type="password"
-            value={value}
-            onChange={handleChange}
-            error={fieldError}
-            isArabic={locale}
-            onValidationChange={onValidationChange}
-            {...{...rest, defaultValue: rest.defaultValue?.toString()}}
-          />
-        );
+        default:
+          console.warn(`Unsupported input type: ${type}`);
+          return null;
+      }
+    };
 
-      case InputTypes.CHECKBOX:
-        const checked = value === "true" || rest.defaultValue === "true";
-        return (
-          <Checkbox
-            name={name}
-            label={label}
-            checked={checked}
-            error={fieldError}
-            onCheckedChange={(checkedValue) => {
-              const fakeEvent = {
-                target: { name, value: checkedValue.toString() },
-              } as React.ChangeEvent<HTMLInputElement>;
-              onChange?.(fakeEvent);
-              handleValidation(checkedValue.toString());
-            }}
-            {...rest}
-          />
-        );
+    return <>{renderField()}</>;
+  }
+);
 
-      default:
-        console.warn(`[FormFields] Unsupported input type: ${type}`);
-        return null;
-    }
-  };
-
-  return <>{renderField()}</>;
-});
-
+// تحديد اسم العرض لتسهيل التصحيح
 FormFields.displayName = "FormFields";
 
 export default FormFields;
