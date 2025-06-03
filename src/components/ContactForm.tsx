@@ -134,7 +134,7 @@ const ContactForm = () => {
           <motion.div variants={itemVariants} className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-6">Get In Touch</h2>
             <p className="text-lg text-gray-300 max-w-2xl mx-auto">
-              Have a project in mind or want to discuss potential opportunities? I'd love to hear from you.
+              Have a project in mind or want to discuss potential opportunities? I&apos;d love to hear from you.
             </p>
             <div className="h-1 w-24 bg-secondary mx-auto mt-6"></div>
           </motion.div>
@@ -193,7 +193,7 @@ const ContactForm = () => {
                     <Textarea
                       id="message"
                       name="message"
-                      placeholder="I'd like to discuss a project..."
+                      placeholder="I&apos;d like to discuss a project..."
                       rows={5}
                       value={formData.message}
                       onChange={handleChange}
@@ -243,7 +243,7 @@ const ContactForm = () => {
                       animate={{ opacity: 1, y: 0 }}
                       className="p-3 bg-green-500/20 border border-green-500/30 text-green-400 rounded-md"
                     >
-                      Your message has been sent successfully! I'll get back to you soon.
+                      Your message has been sent successfully! I&apos;ll get back to you soon.
                     </motion.div>
                   )}
                   

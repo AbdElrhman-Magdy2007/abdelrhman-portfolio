@@ -2,7 +2,7 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-/** Textarea interface that extends HTMLTextAreaElement */
+/** Interface for Textarea component props */
 interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   // This interface is intentionally empty as it only extends HTMLTextAreaElement
   // to provide type safety and proper prop spreading

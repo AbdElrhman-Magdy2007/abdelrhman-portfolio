@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
@@ -45,10 +44,10 @@ const About = () => {
 
           <motion.div variants={itemVariants} className="glass-card p-8 mb-12">
             <p className="text-lg leading-relaxed mb-6">
-              I'm Abdelrahman Magdy, a web developer with 5+ years of experience crafting innovative web solutions. I specialize in turning complex challenges into seamless, user-focused applications using React, Next.js, and TypeScript.
+              I&apos;m Abdelrahman Magdy, a web developer with 5+ years of experience crafting innovative web solutions. I specialize in turning complex challenges into seamless, user-focused applications using React, Next.js, and TypeScript.
             </p>
             <p className="text-lg leading-relaxed">
-              Having worked with startups and global brands, I deliver projects that combine stunning design with robust performance. My mission? To create digital experiences that inspire and drive results. Let's build something extraordinary together!
+              Having worked with startups and global brands, I deliver projects that combine stunning design with robust performance. My mission? To create digital experiences that inspire and drive results. Let&apos;s build something extraordinary together!
             </p>
           </motion.div>
 

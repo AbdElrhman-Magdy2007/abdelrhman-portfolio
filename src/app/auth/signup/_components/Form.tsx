@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useActionState } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { useParams, useRouter } from 'next/navigation';
@@ -120,12 +120,35 @@ const CustomToast = ({ message, type, id }: { message: string; type: 'success' |
 
 function RegisterForm() {
   const router = useRouter();
-  const [state, action, pending] = useActionState(signup, initialState);
+  const [isPending, startTransition] = useTransition();
+  const [state, setState] = useState<FormState>(initialState);
   const [lastToastMessage, setLastToastMessage] = useState<string | null>(null);
   const [sparkles, setSparkles] = useState<{ id: number; x: number; y: number }[]>([]);
   const params = useParams();
 
   const { getFormFields } = useFormFields({ slug: Pages.Register });
+
+  // Handle form submission
+  const handleSubmit = async (formData: FormData) => {
+    startTransition(async () => {
+      try {
+        const result = await signup(state, formData);
+        setState({
+          message: result.message || '',
+          error: result.error,
+          status: result.status,
+          formData: result.formData
+        });
+      } catch (error) {
+        setState({
+          message: 'An error occurred during signup',
+          error: error instanceof Error ? error.message : 'Unknown error',
+          status: 500,
+          formData
+        });
+      }
+    });
+  };
 
   // Handle notifications and redirection
   useEffect(() => {
@@ -177,7 +200,7 @@ function RegisterForm() {
 
   return (
     <form
-      action={action}
+      action={handleSubmit}
       className={clsx(
         'space-y-6 w-full max-w-md mx-auto p-6 sm:p-8',
         'glass-card border-gradient animate-glow',
@@ -218,7 +241,7 @@ function RegisterForm() {
                     : undefined
                 }
                 defaultValue={fieldValue as string | undefined}
-                disabled={pending}
+                disabled={isPending}
                 className={clsx(
                   'w-full p-3 rounded-lg bg-slate-900/50 border border-slate-700',
                   'text-slate-300 placeholder-slate-500 focus:ring-2 focus:ring-blue-400',
@@ -271,14 +294,14 @@ function RegisterForm() {
             'w-full font-medium rounded-lg shadow-md py-2 px-4 transition-all duration-200',
             'bg-gradient-to-r from-blue-400 to-purple-400 hover:from-blue-500 hover:to-purple-500',
             'text-white border-gradient',
-            pending && 'opacity-50 cursor-not-allowed'
+            isPending && 'opacity-50 cursor-not-allowed'
           )}
-          disabled={pending}
+          disabled={isPending}
           onMouseEnter={(e) => createSparkle(e.clientX, e.clientY)}
           onClick={(e) => createSparkle(e.clientX, e.clientY)}
           aria-label="Register"
         >
-          {pending ? (
+          {isPending ? (
             <>
               <Loader className="w-5 h-5 animate-spin" aria-hidden="true" />
               <span>Registering...</span>

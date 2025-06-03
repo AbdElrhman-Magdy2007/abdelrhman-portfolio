@@ -204,7 +204,7 @@ const Hero = () => {
           >
             <motion.div variants={itemVariants} className="mb-6 inline-block">
               <span className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm font-medium">
-                👋 Welcome, I'm
+                👋 Welcome, I&apos;m
               </span>
             </motion.div>
 
@@ -273,6 +273,10 @@ const Hero = () => {
               </Link>
             </motion.div>
             </motion.div>
+
+            <p className="text-muted-foreground">
+              Let&apos;s create something amazing together.
+            </p>
           </motion.div>
         </motion.div>
       </div>
